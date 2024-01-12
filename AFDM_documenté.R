@@ -103,14 +103,14 @@ print(coord.moda)
 # Affichage des coordonnées des individus
 print(round(acp.players$li[,1:2], 5))
 
-# Carré des corrélations 1er facteur sur les variables continues
+# Carré des corrélations Comp1 sur les variables continues
 # Cela permet de comparer la contribution des variables continues à l'analyse factorielle.
 r2 = acp.players$co[1:11, 1] ^ 2
 
 # Somme des carrés des corrélations pour les variables qualitatives
 eta2 = NULL
-eta2[1] = sum(acp.players$co[12:23,1]^2)	# 1er facteur : favorite_world
-eta2[2] = sum(acp.players$co[24:30,1]^2)	# 2ème facteur : geolocation
+eta2[1] = sum(acp.players$co[12:23,1]^2)	# favorite_world
+eta2[2] = sum(acp.players$co[24:30,1]^2)	# geolocation
 
 # Unification de r² et eta²
 criteres = c(r2, eta2) 
@@ -118,8 +118,8 @@ names(criteres) = colnames(players)	# Ajouter les noms des variables
 print(criteres)
 
 # Critère de l’AFDM – 1er facteur
-# Confrontation avec le résultat (v.p.) de l’ACP 
-# sur les variables transformées – 1er facteur 
+# Confrontation avec le résultat (valeurs propres) de l’ACP
+# sur les variables transformées
 lambda1 = sum(criteres)
 print(lambda1)
 print(acp.players$eig[1])
@@ -135,32 +135,4 @@ afdm.players = FAMD(players, ncp=2) # ncp = 2 : 2 facteurs principaux
 
 # Afficher les résultats 
 print(summary(afdm.players))
-
-# ----------------------------------------------------------
-# AFDM avec ade4
-# ----------------------------------------------------------
-# Charger le package
-library(ade4)
-# Lancer la procédure
-dudi.players = dudi.mix(players, scannf=F, nf=2)
-# Afficher les valeurs propres
-print(round(dudi.players$eig, 5))
-# Coordonnées factorielles var./moda.
-print(round(dudi.players$co, 5))
-# Graphique des variables/modalités
-scatter(dudi.players, posieig="top", clab.row=0)
-
-# ----------------------------------------------------------
-# AFDM avec PCAmixdata
-# ----------------------------------------------------------
-# Charger la librairie
-library(PCAmixdata)
-# Lancer la procédure
-pcamix.players = PCAmix(players[1:11], players[12:13], ndim=2, graph=T) 
-# Valeurs propres
-print(round(pcamix.players$eig, 5))
-# Corrélations
-print(round(pcamix.players$quanti.cor, 5))
-# Coordonnées des modalités => dudi.mix de ADE4 
-print(round(pcamix.players$categ.coord, 5))
 

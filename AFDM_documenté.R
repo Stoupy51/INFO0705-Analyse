@@ -6,59 +6,81 @@
 rm(list=ls())
 
 # Charger les données "data_analysis.csv"
-players <- read.csv(file.choose(), row.names=1, header=TRUE, stringsAsFactors=TRUE)
+players = read.csv(file.choose(), row.names=1, header=TRUE, stringsAsFactors=TRUE)
 print(summary(players))
 str(players)
 
-# Cette fonction, notée CR, est définie pour effectuer le centrage-réduction sur un vecteur numérique donné.
+
+
+## Fonctions utilitaires
+# Cette fonction est définie pour effectuer le centrage-réduction sur un vecteur numérique donné.
 # Le centrage-réduction est une étape courante dans l'analyse de données,
 # visant à standardiser les variables en les ramenant à une échelle commune.
-CR <- function(x){
-  n <- length(x)
-  m <- mean(x)
-  v <- (n-1)/n * var(x) 
-  return((x - m) / sqrt(v))
+CentrageReduction = function(x) {
+	n = length(x)
+	m = mean(x)
+	v = (n-1)/n * var(x) 
+	return ((x - m) / sqrt(v))
 }
 
-# Appliquer la fonction de centrage-réduction sur les variables continues (celles de 1 à 11)
-players.cont <- data.frame(lapply(subset(players, select=1:11), CR)) 
-print(players.cont)
-summary(players.cont)
-
-# Codage disjonctif complet :
-# Méthode courante pour représenter des variables
-# qualitatives nominales dans les analyses multivariées.
-library(ade4)
-colonnes_qualitatives = subset(players, select=12:13)
-players.disc <- acm.disjonctif(colonnes_qualitatives)
-View(players.disc)
-
-## PONDÉRATION DES INDICATRICES
 # Fonction pour pondération des indicatrices :
 # Cette fonction permet de normaliser les indicatrices générées lors du codage disjonctif complet (CDC)
 # des variables qualitatives. La normalisation est réalisée en divisant chaque élément de l'indicatrice
 # par la racine carrée de sa moyenne. Cette étape est cruciale dans le processus
 # d'Analyse Factorielle Discriminante Multiple (AFDM) pour garantir une contribution équilibrée
 # des variables qualitatives à l'analyse factorielle, en prenant en compte leurs variances respectives.
-PF <- function(x) {
-  m <- mean(x) 
-  return(x / sqrt(m))
+PonderationF = function(x) {
+	m = mean(x) 
+	return(x / sqrt(m))
 }
 
-# Appliquer la pondération sur les indicatrices
-players.disc.pond <- data.frame(lapply(players.disc, PF))
 
-# Données transformées envoyées à l'ACP
-players.pour.acp <- cbind(players.cont, players.disc.pond) 
-rownames(players.pour.acp) <- rownames(players) 
+
+## Centrage-réduction des variables continues
+# Appliquer la fonction de centrage-réduction sur les variables continues (celles de 1 à 11 selon notre dataset)
+players.cont = data.frame(lapply(subset(players, select = 1:11), CentrageReduction)) 
+print(players.cont)
+summary(players.cont)
+
+
+
+## Codage disjonctif complet (CDC) des variables qualitatives
+# Méthode courante pour représenter des variables
+# qualitatives nominales dans les analyses multivariées.
+# Pour simplifier, cette méthode est utilisée pour coder les variables qualitatives nominales en variables indicatrices.
+# Cela va générer un dataframe contenant autant de variables indicatrices que le nombre de valeurs distinctes.
+library(ade4)
+colonnes_qualitatives = subset(players, select=12:13) # On sélectionne les variables qualitatives
+players.disc = acm.disjonctif(colonnes_qualitatives)
+View(players.disc)
+
+# Appliquer la pondération sur les indicatrices afin de garantir une contribution équilibrée des variables qualitatives
+players.disc.pond = data.frame(lapply(players.disc, PonderationF))
+
+# Concaténation des variables continues et qualitatives codées en indicatrices
+players.pour.acp = cbind(players.cont, players.disc.pond) 
+rownames(players.pour.acp) = rownames(players) # Ajouter les noms des individus car le dataframe génère automatiquement des nombres
 print(round(players.pour.acp, 3))
 
-##
-# ACP avec le package ade4
-library(ade4)
-acp.players <- dudi.pca(players.pour.acp, center=T, scale=F, scannf=F)
 
-# Valeurs propres
+
+## Analyse en Composantes Principales (ACP) sur les variables transformées
+# L'ACP est une méthode de visualisation de données multivariées,
+# qui permet de représenter les variables continues et qualitatives codées en indicatrices
+# sous forme de projections sur un espace de dimensions inférieures.
+# Cette méthode est utilisée pour visualiser les variables continues et qualitatives codées
+# en indicatrices dans le contexte de l'analyse factorielle.
+library(ade4)
+"
+Paramètres de la fonction dudi.pca():
+    players.pour.acp: C'est le dataframe sur lequel l'ACP sera effectuée. Il contient à la fois les variables continues centrées-réduites (players.cont) et les variables qualitatives codées en indicatrices avec pondération (players.disc.pond).
+    center = T: Cela indique que le centrage des variables est effectué. Dans le contexte de l'ACP, cela signifie que la moyenne de chaque variable est soustraite, assurant que le centre de la distribution des données est à l'origine.
+    scale = F: Cela indique que la mise à l'échelle des variables n'est pas effectuée. Dans le contexte de l'ACP, cela signifie que les variables n'ont pas été divisées par leur écart type.
+    scannf = F: Cela indique que la scree plot (graphique de l'éboulis des valeurs propres) n'est pas générée. La scree plot est un outil visuel pour aider à déterminer le nombre de composantes principales à retenir.
+"
+acp.players = dudi.pca(players.pour.acp, center = T, scale = F, scannf = F)
+
+# Affichage des valeurs propres
 print(round(acp.players$eig, 5))
 
 # Coordonnées ACP des variables : Gkh
@@ -67,34 +89,34 @@ print(acp.players$co[,1:2])
 
 # **** Pour les quali -> calculs supplémentaires nécessaires **** 
 # Récupérer les coordonnées ACP des modalités (12 à 30 dans acp.players$co)
-moda <- acp.players$co[12:30, 1:2]
+moda = acp.players$co[12:30, 1:2]
 
 # Fréquence des modalités
-freq.moda <- colMeans(players.disc)
+freq.moda = colMeans(players.disc)
 
 # Calcul des moyennes conditionnelles sur les 2 premiers facteurs
-coord.moda <- moda[,1] * sqrt(acp.players$eig[1] / freq.moda)
-coord.moda <- cbind(coord.moda, moda[,2] * sqrt(acp.players$eig[2] / freq.moda)) 
+coord.moda = moda[,1] * sqrt(acp.players$eig[1] / freq.moda)
+coord.moda = cbind(coord.moda, moda[,2] * sqrt(acp.players$eig[2] / freq.moda)) 
 print(coord.moda)
 
 # Coordonnées des individus
 print(round(acp.players$li[,1:2], 5))
 
 # Carré des corrélations 1er facteur
-r2 <- acp.players$co[1:11,1]^2
+r2 = acp.players$co[1:11,1]^2
 
 # Carré du rapport de corrélation, var. qualitatives
-eta2 <- NULL
-eta2[1] <- sum(acp.players$co[12:23,1]^2)
-eta2[2] <- sum(acp.players$co[24:30,1]^2) 
+eta2 = NULL
+eta2[1] = sum(acp.players$co[12:23,1]^2)
+eta2[2] = sum(acp.players$co[24:30,1]^2) 
 
 # Valeurs à sommer
-criteres <- c(r2, eta2) 
-names(criteres) <- colnames(players) 
+criteres = c(r2, eta2) 
+names(criteres) = colnames(players) 
 print(criteres)
 
 # Critère de l’AFDM – 1er facteur
-lambda1 <- sum(criteres)
+lambda1 = sum(criteres)
 print(lambda1)
 
 # Confrontation avec le résultat (v.p.) de l’ACP 
@@ -107,7 +129,7 @@ print(acp.players$eig[1])
 # Charger le package
 library(FactoMineR)
 # Lancer la procédure 
-afdm.players <- FAMD(players, ncp=2) 
+afdm.players = FAMD(players, ncp=2) 
 # Afficher les résultats 
 print(summary(afdm.players))
 
@@ -117,7 +139,7 @@ print(summary(afdm.players))
 # Charger le package
 library(ade4)
 # Lancer la procédure
-dudi.players <- dudi.mix(players, scannf=F, nf=2)
+dudi.players = dudi.mix(players, scannf=F, nf=2)
 # Afficher les valeurs propres
 print(round(dudi.players$eig, 5))
 # Coordonnées factorielles var./moda.
@@ -131,11 +153,11 @@ scatter(dudi.players, posieig="top", clab.row=0)
 # Charger la librairie
 library(PCAmixdata)
 # Lancer la procédure
-pcamix.players <- PCAmix(players[1:11], players[12:13], ndim=2, graph=T) 
+pcamix.players = PCAmix(players[1:11], players[12:13], ndim=2, graph=T) 
 # Valeurs propres
 print(round(pcamix.players$eig, 5))
 # Corrélations
 print(round(pcamix.players$quanti.cor, 5))
-# Coordonnées des modalités <-> dudi.mix de ADE4 
+# Coordonnées des modalités => dudi.mix de ADE4 
 print(round(pcamix.players$categ.coord, 5))
 

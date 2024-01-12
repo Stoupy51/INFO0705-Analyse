@@ -38,7 +38,7 @@ PonderationF = function(x) {
 ### Transformation des variables
 ## Centrage-réduction des variables continues
 # Appliquer la fonction de centrage-réduction sur les variables continues (celles de 1 à 11 selon notre dataset)
-players.cont = data.frame(lapply(subset(players, select = 1:11), CentrageReduction)) 
+players.cont = data.frame(lapply(subset(players, select = 1:10), CentrageReduction)) 
 print(players.cont)
 summary(players.cont)
 
@@ -50,7 +50,7 @@ summary(players.cont)
 # Pour simplifier, cette méthode est utilisée pour coder les variables qualitatives nominales en variables indicatrices.
 # Cela va générer un dataframe contenant autant de variables indicatrices que le nombre de valeurs distinctes.
 library(ade4)
-colonnes_qualitatives = subset(players, select=12:13) # On sélectionne les variables qualitatives
+colonnes_qualitatives = subset(players, select=11:12) # On sélectionne les variables qualitatives
 players.disc = acm.disjonctif(colonnes_qualitatives)
 View(players.disc)
 
@@ -89,7 +89,7 @@ print(acp.players$co[,1:2])
 
 # Pour les qualitatives, on calcule les coordonnées ACP à partir des modalités.
 # Récupérer les coordonnées ACP des modalités (12 à 30 dans acp.players$co)
-moda = acp.players$co[12:30, 1:2]
+moda = acp.players$co[11:29, 1:2]
 
 # Fréquence des modalités
 freq.moda = colMeans(players.disc)
@@ -105,12 +105,12 @@ print(round(acp.players$li[,1:2], 5))
 
 # Carré des corrélations Comp1 sur les variables continues
 # Cela permet de comparer la contribution des variables continues à l'analyse factorielle.
-r2 = acp.players$co[1:11, 1] ^ 2
+r2 = acp.players$co[1:10, 1] ^ 2
 
 # Somme des carrés des corrélations pour les variables qualitatives
 eta2 = NULL
-eta2[1] = sum(acp.players$co[12:23,1]^2)	# favorite_world
-eta2[2] = sum(acp.players$co[24:30,1]^2)	# geolocation
+eta2[1] = sum(acp.players$co[11:23,1]^2)	# favorite_world
+eta2[2] = sum(acp.players$co[23:29,1]^2)	# geolocation
 
 # Unification de r² et eta²
 criteres = c(r2, eta2) 

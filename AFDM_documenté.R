@@ -31,11 +31,11 @@ CentrageReduction = function(x) {
 # des variables qualitatives à l'analyse factorielle, en prenant en compte leurs variances respectives.
 PonderationF = function(x) {
 	m = mean(x) 
-	return(x / sqrt(m))
+	return (x / sqrt(m))
 }
 
 
-
+### Transformation des variables
 ## Centrage-réduction des variables continues
 # Appliquer la fonction de centrage-réduction sur les variables continues (celles de 1 à 11 selon notre dataset)
 players.cont = data.frame(lapply(subset(players, select = 1:11), CentrageReduction)) 
@@ -63,7 +63,7 @@ rownames(players.pour.acp) = rownames(players) # Ajouter les noms des individus 
 print(round(players.pour.acp, 3))
 
 
-
+### Analyse Factorielle Discriminante Multiple (AFDM)
 ## Analyse en Composantes Principales (ACP) sur les variables transformées
 # L'ACP est une méthode de visualisation de données multivariées,
 # qui permet de représenter les variables continues et qualitatives codées en indicatrices
@@ -83,11 +83,11 @@ acp.players = dudi.pca(players.pour.acp, center = T, scale = F, scannf = F)
 # Affichage des valeurs propres
 print(round(acp.players$eig, 5))
 
-# Coordonnées ACP des variables : Gkh
-# Pour les quanti -> corrélations avec les facteurs 
+# Coordonnées ACP des variables continues
+# Pour les quantitatives, c'est la corrélation avec les facteurs 
 print(acp.players$co[,1:2])
 
-# **** Pour les quali -> calculs supplémentaires nécessaires **** 
+# Pour les qualitatives, on calcule les coordonnées ACP à partir des modalités.
 # Récupérer les coordonnées ACP des modalités (12 à 30 dans acp.players$co)
 moda = acp.players$co[12:30, 1:2]
 
@@ -95,41 +95,44 @@ moda = acp.players$co[12:30, 1:2]
 freq.moda = colMeans(players.disc)
 
 # Calcul des moyennes conditionnelles sur les 2 premiers facteurs
+# Les moyennes conditionnelles sont des moyennes des individus pondérées par les fréquences des modalités
 coord.moda = moda[,1] * sqrt(acp.players$eig[1] / freq.moda)
 coord.moda = cbind(coord.moda, moda[,2] * sqrt(acp.players$eig[2] / freq.moda)) 
 print(coord.moda)
 
-# Coordonnées des individus
+# Affichage des coordonnées des individus
 print(round(acp.players$li[,1:2], 5))
 
-# Carré des corrélations 1er facteur
-r2 = acp.players$co[1:11,1]^2
+# Carré des corrélations 1er facteur sur les variables continues
+# Cela permet de comparer la contribution des variables continues à l'analyse factorielle.
+r2 = acp.players$co[1:11, 1] ^ 2
 
-# Carré du rapport de corrélation, var. qualitatives
+# Somme des carrés des corrélations pour les variables qualitatives
 eta2 = NULL
-eta2[1] = sum(acp.players$co[12:23,1]^2)
-eta2[2] = sum(acp.players$co[24:30,1]^2) 
+eta2[1] = sum(acp.players$co[12:23,1]^2)	# 1er facteur : favorite_world
+eta2[2] = sum(acp.players$co[24:30,1]^2)	# 2ème facteur : geolocation
 
-# Valeurs à sommer
+# Unification de r² et eta²
 criteres = c(r2, eta2) 
-names(criteres) = colnames(players) 
+names(criteres) = colnames(players)	# Ajouter les noms des variables
 print(criteres)
 
 # Critère de l’AFDM – 1er facteur
-lambda1 = sum(criteres)
-print(lambda1)
-
 # Confrontation avec le résultat (v.p.) de l’ACP 
 # sur les variables transformées – 1er facteur 
+lambda1 = sum(criteres)
+print(lambda1)
 print(acp.players$eig[1])
+
+
 
 # ----------------------------------------------------------
 # AFDM avec FactoMineR
 # ----------------------------------------------------------
-# Charger le package
+# Charger le package et lancer la procédure
 library(FactoMineR)
-# Lancer la procédure 
-afdm.players = FAMD(players, ncp=2) 
+afdm.players = FAMD(players, ncp=2) # ncp = 2 : 2 facteurs principaux
+
 # Afficher les résultats 
 print(summary(afdm.players))
 

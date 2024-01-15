@@ -136,3 +136,7 @@ afdm.players = FAMD(players, ncp=2) # ncp = 2 : 2 facteurs principaux
 # Afficher les résultats 
 print(summary(afdm.players))
 
+# Générer des plots pour chaque variable qualitative
+plot(afdm.players, habillage=11)
+plot(afdm.players, habillage=12)
+

@@ -1,0 +1,20 @@
+SELECT DISTINCT
+  	pu.name,
+	pu.registered,
+	pu.times_kicked,
+	(SELECT pg.geolocation FROM plan_geolocations pg WHERE pg.user_id = pu.id AND pg.last_used = (SELECT MAX(pg2.last_used) FROM plan_geolocations pg2 WHERE pg.user_id = pg2.user_id)) as "geolocation",
+	(SELECT COUNT(*) FROM plan_kills pk WHERE pk.killer_uuid = pu.uuid) as "nb_player_kills",
+	(SELECT SUM(ps.mob_kills) FROM plan_sessions ps WHERE ps.user_id = pu.id) as "nb_mob_kills",
+	(SELECT SUM(ps.deaths) FROM plan_sessions ps WHERE ps.user_id = pu.id) as "nb_deaths",
+	(SELECT AVG(pp.avg_ping) FROM plan_ping pp WHERE pp.user_id = pu.id) as "avg_ping",
+	(SELECT COUNT(*) FROM plan_sessions ps WHERE ps.user_id = pu.id) as "nb_sessions",
+	(SELECT MAX(ps.session_end - ps.session_start) FROM plan_sessions ps WHERE ps.user_id = pu.id) as "longest_session",
+	(SELECT AVG(ps.session_end - ps.session_start) FROM plan_sessions ps WHERE ps.user_id = pu.id) as "avg_session",
+	(SELECT SUM(ps.session_end - ps.session_start) - SUM(ps.afk_time) FROM plan_sessions ps WHERE ps.user_id = pu.id) as "active_playtime",
+	(SELECT SUM(ps.afk_time) FROM plan_sessions ps WHERE ps.user_id = pu.id) as "afk_time",
+	(SELECT pw.world_name FROM plan_worlds pw WHERE pw.id = (
+   	 SELECT pwt.world_id FROM plan_world_times pwt WHERE pwt.user_id = pu.id
+   	 ORDER BY (pwt.survival_time + pwt.creative_time + pwt.adventure_time + pwt.spectator_time) DESC
+   	 LIMIT 1
+    )) as "favorite_world"
+FROM plan_users pu

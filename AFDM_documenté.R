@@ -37,8 +37,10 @@ PonderationF = function(x) {
 
 ### Transformation des variables
 ## Centrage-réduction des variables continues
-# Appliquer la fonction de centrage-réduction sur les variables continues (celles de 1 à 11 selon notre dataset)
-players.cont = data.frame(lapply(subset(players, select = 1:10), CentrageReduction)) 
+# Identifier les colonnes numériques dans le dataset
+numeric_cols <- sapply(players, is.numeric)
+# Appliquer la fonction de centrage-réduction uniquement sur les variables numériques
+players.cont = data.frame(lapply(players[, numeric_cols], CentrageReduction))
 print(players.cont)
 summary(players.cont)
 
@@ -114,11 +116,16 @@ eta2[2] = sum(acp.players$co[23:29,1]^2)	# geolocation
 
 # Unification de r² et eta²
 criteres = c(r2, eta2) 
-names(criteres) = colnames(players)	# Ajouter les noms des variables
+# Vérifier les dimensions avant d'attribuer les noms
+print(length(criteres))  # Devrait afficher 12
+print(length(colnames(players)))  # Affiche probablement 13
+
+# Utiliser seulement les noms correspondant à la longueur de criteres
+names(criteres) = colnames(players)[1:length(criteres)]  # Ajouter les noms des variables
 print(criteres)
 
-# Critère de l’AFDM – 1er facteur
-# Confrontation avec le résultat (valeurs propres) de l’ACP
+# Critère de l'AFDM – 1er facteur
+# Confrontation avec le résultat (valeurs propres) de l'ACP
 # sur les variables transformées
 lambda1 = sum(criteres)
 print(lambda1)
